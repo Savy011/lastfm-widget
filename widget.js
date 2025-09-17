@@ -4,41 +4,79 @@ class LastFmWidget extends HTMLElement {
 
 	#API_URL = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks';
 
+	#track_info = {};
+	shadow;
+
 	constructor() {
 		super();
-		this.getRecentTrack();
+		this.shadow = this.attachShadow({ mode: 'closed' });
 		this.render();
 	}
 
-	getRecentTrack() {
-		const apiUrl = `${this.#API_URL}?user=${this.#USERNAME}&api_key=${this.API_KEY}&format=json`;
-		const res = fetch(apiUrl).then(r => r.json())
-
-		console.log(res)
+	async getRecentTrack() {
+		const apiUrl = `${this.#API_URL}&user=${this.#USERNAME}&api_key=${this.#API_KEY}&format=json`;
+		const res = await fetch(apiUrl)
+		const json = await res.json()
+		const rt = json.recenttracks.track[0];
+		const cover = rt.image.filter(i => i.size === 'large')[0]['#text'];
+		
+		return { artist: rt.artist['#text'], name: rt.name, album: rt.album['#text'], cover };
 	}
 
-	connectedCallback() {
+	async connectedCallback() {
 		console.log("I'm connected...")
+		this.#track_info = await this.getRecentTrack();
+
+		console.log(this.#track_info);
+		this.render();
 	}
 
 	render() {
-		this.textContent = 'Last.fm Widget';
-
-		const shadow = this.attachShadow({ mode: 'open' });
-
-		shadow.innerHTML = `
-		<style>
-			span {
-				font-family: 'monospace';
+		const CSS = `<style>
+			span, pre, p {
+				font-family: monospace;
 				font-size: 24px;
 				background-color: #0055b7;
 				color: #99ee99;
 				padding: 0.25rem .5rem;
 			}
-		</style>
 
-		<span>leefymoon</span>
-		`
+			.wrapper {
+				display: flex; 
+			}
+
+			.wrapper.image {
+				height: 108px;	
+				width: 108px;
+			}
+
+			p {
+				margin: 0;
+			}
+		</style>`
+
+		if (this.#track_info.hasOwnProperty('name')) {
+			this.shadow.innerHTML = `
+				${CSS}
+
+				<div class="wrapper">
+					<div class="image">
+						<img src="${this.#track_info.cover}"/>
+					</div>
+					<div class="track info">
+						<p>${this.#track_info.name}</p>
+						<p>${this.#track_info.artist}</p>
+						<p>${this.#track_info.album}</p>
+					</div>
+				</div>
+			`
+		} else {
+			this.shadow.innerHTML = `
+				${CSS}
+
+				<span>loading...</span>
+			`;
+		}
 	}
 }
 
