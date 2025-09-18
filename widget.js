@@ -1,18 +1,73 @@
 class LastFmWidget extends HTMLElement {
   #USERNAME = '<enter your last.fm username here>';
   #API_KEY = '<enter your last.fm api key here>';
+  // Constants
 
   #API_URL = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks';
   #FALLBACK_IMG = 'https://lastfm.freetls.fastly.net/i/u/64s/c6f59c1e5e7240a4c0d427abd71f3dbb.jpg';
 
+  // Local State
   #shadow;
-  #track_info = {};
+  #track_info;
   #controller;
+  #interval_id;
+
+  // Attributes
+  #auto_update;
+  #polling_rate // in seconds;
 
   constructor() {
     super();
     this.#shadow = this.attachShadow({ mode: 'closed' });
+
+    this.#setStyles();
+
+    this.#auto_update = this.hasAttribute("auto-update");
+    this.#polling_rate = Number(this.getAttribute("polling-rate")) || 15;
+
     this.#render();
+  }
+
+  async connectedCallback() {
+    await this.#loadTrack();
+
+    if (this.#auto_update) {
+      this.#startAutoUpdate();
+    }
+  }
+
+  async disconnectedCallback() {
+    this.#controller?.abort();
+    this.#stopAutoUpdate();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this.isConnected) return;
+
+    if (name === 'auto-update') {
+      const should_auto_update = newValue !== null;
+
+      if (should_auto_update !== this.#auto_update) {
+	this.#auto_update = should_auto_update;
+	should_auto_update
+	  ? this.#startAutoUpdate()
+	  : this.#stopAutoUpdate();
+      }
+    } else if (name === 'polling-rate') {
+      const new_polling_rate = Number(newValue) || 15;
+
+      if (new_polling_rate !== this.#polling_rate) {
+	this.#polling_rate = new_polling_rate;
+	if (this.#auto_update) {
+	  this.#stopAutoUpdate();
+	  this.#startAutoUpdate();
+	}
+      }
+    }
+  }
+
+  static get observedAttributes() {
+    return ['auto-update', 'polling-rate'];
   }
 
   #setStyles() {
@@ -73,7 +128,25 @@ class LastFmWidget extends HTMLElement {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(styles);
 
-    return sheet;
+    this.#shadow.adoptedStyleSheets = [sheet];
+  }
+
+  async #loadTrack() {
+    this.#track_info = await this.#getRecentTrack();
+    this.#render();
+  }
+
+  #startAutoUpdate() {
+    this.#interval_id = setInterval(async () => {
+      await this.#loadTrack();
+    }, this.#polling_rate * 1000);
+  }
+
+  #stopAutoUpdate() {
+    if (this.#interval_id) {
+      clearInterval(this.#interval_id);
+      this.#interval_id = null;
+    }
   }
 
   async #getRecentTrack() {
@@ -81,7 +154,7 @@ class LastFmWidget extends HTMLElement {
       this.#controller = new AbortController();
       const signal = this.#controller.signal;
 
-      const apiUrl = `${this.#API_URL}&user=${this.#USERNAME}&api_key=${this.#API_KEY}&format=json`;
+      const apiUrl = `${this.#API_URL}&user=${this.#USERNAME}&api_key=${this.#API_KEY}&format=json&limit=1`;
       const res = await fetch(apiUrl, { signal })
 
       if (!res.ok) {
@@ -99,35 +172,35 @@ class LastFmWidget extends HTMLElement {
       const cover = image?.['#text'] || this.#FALLBACK_IMG;
 
       return {
-	artist: track.artist?.['#text'] || 'Unkown Artist', 
-	name: track.name || 'Unkown Artist', 
-	album: track.album?.['#text'] || 'Unkown Artist', 
+	artist: track.artist?.['#text'] || 'Unknown Artist',
+	name: track.name || 'Unknown Track',
+	album: track.album?.['#text'] || 'Unknown Album',
 	cover
       };
     } catch (e) {
-      console.error(e)
-      return { error: 'some error occurred while fetching last played track.'};
+      console.error('Last.fm API Error', e)
+
+      if (e.name === 'AbortError') {
+	return { error: 'the request was cancelled' };
+      }
+
+      if (e.message.includes('HTTP 404')) {
+	return { error: 'the requested user was not found.'};
+      }
+
+      if (e.message.includes('HTTP 429')) {
+	return { error: 'you are being rate limited. try again later.'};
+      }
+
+      return { error: 'some error occurred while fetching recent track.'};
     }
-  }
-
-  async connectedCallback() {
-    const sheet = this.#setStyles();
-    this.#shadow.adoptedStyleSheets = [sheet];
-
-    this.#track_info = await this.#getRecentTrack();
-
-    this.#render();
-  }
-
-  async disconnectedCallback() {
-    this.#controller?.abort();
   }
 
   #render() {
     const wrapper = document.createElement("div");
     wrapper.classList.add("wrapper")
 
-    if (this.#track_info.hasOwnProperty('name')) {
+    if (this.#track_info?.hasOwnProperty('name')) {
       const { name, artist, album, cover } = this.#track_info;
     
       const divTrackInfo = document.createElement("div");
@@ -148,7 +221,7 @@ class LastFmWidget extends HTMLElement {
       divTrackInfo.append(pName, pArtist, pAlbum);
       
       wrapper.append(img, divTrackInfo)
-    } else if (this.#track_info.hasOwnProperty('error')) {
+    } else if (this.#track_info?.hasOwnProperty('error')) {
       const pError = document.createElement("p");
 
       pError.classList.add("error")
