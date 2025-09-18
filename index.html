@@ -2,10 +2,55 @@
 <html lang="en">
 	<head>
 		<title>Last.fm Widget</title>
-	</head>
-	<body>
-		<last-fm-widget></last-fm-widget>
 
-		<script type="module" src="widget.js"></script>
+		<style>
+			*, *::before, *::after {
+				box-sizing: border-box;
+			}
+
+			* {
+				margin: 0;
+			}
+
+			body {
+				height: 100vh;
+				line-height: 1.5;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			body {
+				height: 100vh;
+			}
+
+			img, picture, video, canvas, svg {
+				display: block;
+				max-width: 100%;
+			}
+			p {
+				text-wrap: pretty;
+				overflow-wrap: break-word;
+			}
+
+			h1, h2, h3, h4, h5, h6 {
+				text-wrap: balance;
+				overflow-wrap: break-word;
+			}
+
+			.container {
+				height: 100%;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="container">
+			<last-fm-widget></last-fm-widget>
+		</div>
+
+		<script type="module" src="/widget.js"></script>
 	</body>
 </html>
