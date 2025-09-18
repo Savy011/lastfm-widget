@@ -1,8 +1,11 @@
 # Last.fm Widget
-
+<div align="center">
+  
 A simple _almost_ 'plug-n-play' [last.fm](https://last.fm) recently playing widget created with Web Components.
 
 ![a screenshot of the last.fm widget. It is showing 'UNLOVE (prod. HONNE)' by Zion.T on Zip with the album's cover art. The widget background is dark blue and the text colour is light green](widget-example.png)
+
+</div>
 
 ## Usage
 
@@ -81,4 +84,6 @@ class LastFmWidget extends HTMLElement {
 
 ---
 
-Web Components are kinda cool, ngl.
+<div align="center">
+  <samp>Web Components are kinda cool, ngl.</samp>
+</div>
