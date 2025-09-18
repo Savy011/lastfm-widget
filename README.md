@@ -1,12 +1,12 @@
 # Last.fm Widget
 
-A simple 'plug-n-play' [last.fm](https://last.fm) recently playing widget created with Web Components.
+A simple _almost_ 'plug-n-play' [last.fm](https://last.fm) recently playing widget created with Web Components.
 
-![](widget-example.png)
+![a screenshot of the last.fm widget. It is showing 'UNLOVE (prod. HONNE)' by Zion.T on Zip with the album's cover art. The widget background is dark blue and the text colour is light green](widget-example.png)
 
 ## Usage
 
-1. edit the values for the username to fetch from and your last.fm api key in the script
+1. Edit the values for the Username to fetch from and your last.fm api key in the script (get it from [here](https://www.last.fm/api/account/create)).
 
 ```js
 class LastFmWidget extends HTMLElement {
@@ -15,13 +15,13 @@ class LastFmWidget extends HTMLElement {
   #API_KEY = '<enter your last.fm api key here>'; // and this
 ```
 
-2. Optionally change the fallback img for cover arts.
+2. (Optional) Change the fallback image url for cover arts.
 
 ```js
 #FALLBACK_IMG = 'https://lastfm.freetls.fastly.net/i/u/64s/c6f59c1e5e7240a4c0d427abd71f3dbb.jpg'; // Change this
 ```
 
-3. Optionally change the css for the widget. this is the general html structure for reference.
+3. (Optional) Change the CSS for the widget. This is the html structure of different states of the widget for reference.
 
 ```html
 <!-- Widget with Track Info -->
@@ -51,6 +51,13 @@ class LastFmWidget extends HTMLElement {
 ```html
 <script type="module" src="/widget.js"></script>
 ```
+## Attributes
+
+|      Name      |  Type   | Default | Description |
+|      :--:      |  :--:   | :-----: | :---------: |
+| `auto-update`  | Boolean | `false` | Should thew widget refetch current song after a set interval |
+| `polling-rate` | Number  |  `15`   | time between refetches (in seconds) |
+
 
 ## Variants
 
@@ -72,9 +79,6 @@ class LastFmWidget extends HTMLElement {
 <last-fm-widget auto-update polling-rate="30"></last-fm-widget>
 ```
 
-## Attributes
+---
 
-|      Name      |  Type   | Default | Description |
-|      :--:      |  :--:   | :-----: | :---------: |
-| `auto-update`  | Boolean | `false` | Should thew widget refetch current song after a set interval |
-| `polling-rate` | Number  |  `15`   | time between refetches (in seconds) |
+Web Components are kinda cool, ngl.
